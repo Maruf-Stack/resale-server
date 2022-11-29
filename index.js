@@ -83,7 +83,13 @@ async function run() {
             res.send(users)
 
         })
-        app.put('/users/admit/:id', async (req, res) => {
+        app.put('/users/admit/:id', jwt.verify, async (req, res) => {
+            const email = req.decoded.email;
+            const query = { email: email };
+            const user = userCollection.findOne(query);
+            if (user?.role !== 'admin') {
+                return res.status(403).send('forbidden access')
+            }
             const id = req.params.id;
             const filter = { _id: ObjectId(id) }
             const option = { upsert: true }
