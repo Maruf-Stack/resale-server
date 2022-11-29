@@ -3,7 +3,8 @@ const app = express('cors')
 const port = process.env.PORT || 5000;
 const cors = require('cors')
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
-const jwt = require('jsonwebtoken')
+const jwt = require('jsonwebtoken');
+const { query } = require('express');
 require('dotenv').config()
 app.use(cors())
 app.use(express.json())
@@ -100,6 +101,18 @@ async function run() {
             }
             const result = userCollection.updateOne(filter, update, option);
             res.send(result)
+        })
+        app.get('/users/admit/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email }
+            const user = await userCollection.findOne(query);
+            res.send({ isAdmin: user?.role === 'admin' })
+        })
+        app.get('/users/seller/:option', async (req, res) => {
+            const option = req.params.option;
+            const query = { option }
+            const user = await userCollection.findOne(query);
+            res.send(user)
         })
     }
     finally {
