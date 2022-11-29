@@ -83,6 +83,18 @@ async function run() {
             res.send(users)
 
         })
+        app.put('/users/admit/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) }
+            const option = { upsert: true }
+            const update = {
+                $set: {
+                    role: 'admin'
+                }
+            }
+            const result = userCollection.updateOne(filter, update, option);
+            res.send(result)
+        })
     }
     finally {
 
