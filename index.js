@@ -19,7 +19,7 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 function verifyToken(req, res, next) {
     const header = req.header.authirization;
     if (!header) {
-        return res.status(401).send('')
+        return res.status(401).send('Your are unauthorized')
     }
     const token = header.split(' ')[1];
     jwt.verify(token, process.env.ACCESS_TOKEN, function (error, decoded) {
@@ -54,6 +54,9 @@ async function run() {
         app.get('/bookings', verifyToken, async (req, res) => {
             const email = req.query.email;
             const decoded = req.decoded.email;
+            if (email != decoded) {
+                res.status(403).send('Forbidden access')
+            }
             const query = { email: email };
             const bookings = await bookingCollection.find(query).toArray();
             res.send(bookings)
