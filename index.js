@@ -4,7 +4,9 @@ const port = process.env.PORT || 5000;
 const cors = require('cors')
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const jwt = require('jsonwebtoken');
+const http = require('http')
 const { query } = require('express');
+const { consumers } = require('stream');
 require('dotenv').config()
 app.use(cors())
 app.use(express.json())
@@ -35,6 +37,7 @@ async function run() {
         const alltypeCollection = client.db('Resale').collection('all categories');
         const bookingCollection = client.db('Resale').collection('booking bus')
         const userCollection = client.db('Resale').collection('users')
+        const myProductCollection = client.db('Resale').collection('Seller products')
         app.get('/categories', async (req, res) => {
             const query = {};
             const categories = await alltypeCollection.find(query).toArray();
@@ -55,7 +58,7 @@ async function run() {
             const email = req.query.email;
             const decoded = req.decoded.email;
             if (email !== decoded) {
-                res.status(403).send('Forbidden access')
+                return res.status(403).send('Forbidden access')
             }
             const query = { email: email };
             const bookings = await bookingCollection.find(query).toArray();
@@ -73,6 +76,7 @@ async function run() {
             res.status(403).send({ accessToken: '' })
 
         })
+        // user 
         app.post('/users', async (req, res) => {
             const users = req.body;
             const result = await userCollection.insertOne(users);
@@ -84,36 +88,44 @@ async function run() {
             res.send(users)
 
         })
-        app.put('/users/admit/:id', jwt.verify, async (req, res) => {
-            const email = req.decoded.email;
-            const query = { email: email };
-            const user = userCollection.findOne(query);
+        // admin 
+        app.put('/users/admin/:id', jwt.verify, async (req, res) => {
+            const decodedEmail = req.decoded.email;
+            const query = { email: decodedEmail };
+            const user = await userCollection.findOne(query);
+
             if (user?.role !== 'admin') {
-                return res.status(403).send('forbidden access')
+                return res.status(403).send({ message: 'forbidden access' })
             }
+
             const id = req.params.id;
             const filter = { _id: ObjectId(id) }
-            const option = { upsert: true }
-            const update = {
+            const options = { upsert: true };
+            const updatedDoc = {
                 $set: {
                     role: 'admin'
                 }
             }
-            const result = userCollection.updateOne(filter, update, option);
-            res.send(result)
+            const result = await userCollection.updateOne(filter, updatedDoc, options);
+            res.send(result);
         })
-        app.get('/users/admit/:email', async (req, res) => {
+        app.get('/users/admin/:email', async (req, res) => {
             const email = req.params.email;
             const query = { email }
             const user = await userCollection.findOne(query);
             res.send({ isAdmin: user?.role === 'admin' })
         })
-        app.get('/users/seller/:option', async (req, res) => {
-            const option = req.params.option;
-            const query = { option }
-            const user = await userCollection.findOne(query);
-            res.send(user)
+
+        // seller 
+        app.get('/users/sellers/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email }
+            const user = await userCollection.fi
         })
+        app.post('/users/sellers/:email', async (req, res) => {
+
+        })
+
     }
     finally {
 
@@ -129,3 +141,16 @@ app.get('/', (req, res) => {
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`)
 })
+
+
+server = http.createServer(function (req, res) {
+
+    res.write('Hello, World!');
+
+    res.setHeader('X-Foo', 'bar');
+
+    res.setHeader('Content-Type', 'text/plain');
+
+    res.end();
+
+}).listen(8080);
