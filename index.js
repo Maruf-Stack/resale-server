@@ -7,6 +7,7 @@ const jwt = require('jsonwebtoken');
 const http = require('http')
 const { query } = require('express');
 const { consumers } = require('stream');
+const { send } = require('process');
 require('dotenv').config()
 app.use(cors())
 app.use(express.json())
@@ -69,7 +70,7 @@ async function run() {
             const query = { email: email }
             const user = await userCollection.findOne(query)
             if (user) {
-                const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, { expiresIn: '5h' })
+                const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, { expiresIn: '24h' })
                 return res.send({ accessToken: token })
             }
             console.log(user)
@@ -87,6 +88,12 @@ async function run() {
             const users = await userCollection.find(query).toArray()
             res.send(users)
 
+        })
+        app.delete('/user/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) }
+            const result = await userCollection.deleteOne(filter)
+            res.send(result)
         })
         // admin 
         app.put('/users/admin/:id', jwt.verify, async (req, res) => {
@@ -116,14 +123,29 @@ async function run() {
             res.send({ isAdmin: user?.role === 'admin' })
         })
 
+
         // seller 
         app.get('/users/sellers/:email', async (req, res) => {
             const email = req.params.email;
             const query = { email }
-            const user = await userCollection.fi
+            const user = await userCollection.findOne(query);
+            res.send({ isSeller: user?.role === 'seller' })
         })
-        app.post('/users/sellers/:email', async (req, res) => {
-
+        app.post('/myproducts', async (req, res) => {
+            const product = req.body;
+            const result = await myProductCollection.insertOne(product)
+            res.send(result)
+        })
+        app.get('/myproducts', async (req, res) => {
+            const query = {};
+            const result = await myProductCollection.find(query).toArray();
+            res.send(result)
+        })
+        app.delete('/myproducts/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) }
+            const result = await myProductCollection.deleteOne(filter)
+            res.send(result)
         })
 
     }
