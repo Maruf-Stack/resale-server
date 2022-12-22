@@ -83,10 +83,14 @@ async function run() {
             const result = await userCollection.insertOne(users);
             res.send(result)
         })
-        app.get('/users', async (req, res) => {
-            const query = {};
-            const users = await userCollection.find(query).toArray()
-            res.send(users)
+        app.get('/users/:email', async (req, res) => {
+            // const query = {};
+            // const users = await userCollection.find(query).toArray()
+            // res.send(users)
+            const email = req.params.email;
+            const query = { email }
+            const user = await userCollection.findOne(query);
+            res.send({ isUser: user?.role === 'user' })
 
         })
         app.delete('/user/:id', async (req, res) => {
